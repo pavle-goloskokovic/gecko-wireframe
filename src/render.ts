@@ -130,6 +130,8 @@ export class GeckoRenderer {
   private width = 1;
   private height = 1;
   bloom = true;
+  /** Render at the device pixel ratio instead of 1 css px = 1 px (capped at 1280 wide). */
+  hiRes = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
@@ -171,9 +173,11 @@ export class GeckoRenderer {
     this.composer.addPass(new OutputPass());
   }
 
-  /** Internal resolution: the window, capped at 1280 px wide (the TouchDesigner project used 640x360). */
+  /** Internal resolution: the window at 1 px per css px capped at 1280 wide (the TouchDesigner project used
+   *  640x360), or the full device pixel ratio when hiRes is on. Pixel sizes (boxes, wobble) are in render px,
+   *  so hi-res means finer wires and smaller nodes, as the shader would do at a higher uRes. */
   resize(cssW: number, cssH: number) {
-    const scale = Math.min(1, 1280 / Math.max(cssW, 1));
+    const scale = this.hiRes ? (window.devicePixelRatio || 1) : Math.min(1, 1280 / Math.max(cssW, 1));
     this.width = Math.max(2, Math.round(cssW * scale));
     this.height = Math.max(2, Math.round(cssH * scale));
     this.renderer.setSize(this.width, this.height, false);

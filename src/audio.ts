@@ -114,7 +114,9 @@ export class GeckoAudio {
 
   private noiseBuf!: AudioBuffer;
   private clipCurve = curve(x => x);                                              // identity inside, clamp outside
-  private crushCurve = curve(x => Math.floor(x * 6) / 6);                         // ~3 bits, like gain 6 / floor / gain 1/6
+  // ~3 bits, like gain 6 / floor / gain 1/6. The tongue sum peaks at 1.3, beyond the shaper's -1..1 input range, so the
+  // signal is scaled by 1/1.3 first and the curve crushes the unscaled value: floor(6 * 1.3 u) / 6.
+  private crushCurve = curve(u => Math.floor(7.8 * u) / 6);
 
   // ------------------------------------------------------------ the graph
   private build() {
@@ -179,7 +181,7 @@ export class GeckoAudio {
     this.modulate(wiggle.gain, 0.7, 'sine', 2.86, 0.3);
     this.tongueSwell = this.gain(0);
     const tongueOut = this.layerOut('tongue', 1.0);
-    this.chain(tongueSum, this.shaper(this.crushCurve), this.tongueLp, this.filter('lowpass', 2500, Q(0)), stutter, wiggle, this.tongueSwell, tongueOut, mix);
+    this.chain(tongueSum, this.gain(1 / 1.3), this.shaper(this.crushCurve), this.tongueLp, this.filter('lowpass', 2500, Q(0)), stutter, wiggle, this.tongueSwell, tongueOut, mix);
     this.popAmp = this.gain(0);                                      // noise pop on the onset
     this.chain(this.noise(), this.filter('highpass', 2500, Q(0.5)), this.popAmp, this.gain(0.5), tongueOut);
 
@@ -203,13 +205,12 @@ export class GeckoAudio {
     const padOut = this.layerOut('pad', 0.2);
     this.chain(padSum, this.padLp, this.padLevel, this.padPan, padOut, mix);
 
-    // --- master: far camera = muffled, tail pans the whole mix, clamp limiter
+    // --- master: far camera = muffled, tail pans the whole mix, clamp limiter. A clamp, not a compressor: a
+    // compressor's gain reduction follows the kick and bass and pulls the quieter layers (tongue, pad) down with them.
     this.masterLp = this.filter('lowpass', 12000, Q(0));
     this.masterPan = ctx.createStereoPanner();
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -4; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
     this.master.gain.value = 0.8;
-    this.chain(mix, this.masterLp, this.masterPan, this.gain(0.45), limiter, this.master, ctx.destination);
+    this.chain(mix, this.masterLp, this.masterPan, this.gain(0.45), this.shaper(this.clipCurve), this.master, ctx.destination);
   }
 
   // ------------------------------------------------------------ layer control

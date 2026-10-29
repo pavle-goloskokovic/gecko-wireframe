@@ -10,6 +10,8 @@ const stepHzInput = document.getElementById('stepHz') as HTMLInputElement;
 const stepHzVal = document.getElementById('stepHzVal') as HTMLSpanElement;
 const renderToggle = document.getElementById('render') as HTMLInputElement;
 const bloomToggle = document.getElementById('bloom') as HTMLInputElement;
+const hiResToggle = document.getElementById('hires') as HTMLInputElement;
+const hiResLabel = document.getElementById('hiresLabel') as HTMLSpanElement;
 const layersBox = document.getElementById('layers') as HTMLDivElement;
 const stats = document.getElementById('stats') as HTMLDivElement;
 
@@ -43,6 +45,8 @@ stepHzInput.addEventListener('input', () => {
   stepHzVal.textContent = P.stepHz.toFixed(2);
 });
 bloomToggle.addEventListener('change', () => { renderer.bloom = bloomToggle.checked; });
+hiResLabel.textContent = ` hi-res (x${(window.devicePixelRatio || 1).toFixed(2)})`;
+hiResToggle.addEventListener('change', () => { renderer.hiRes = hiResToggle.checked; resize(); });
 
 startBtn.addEventListener('click', async () => {
   if (audio) return;
