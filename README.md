@@ -11,8 +11,13 @@ npm run preview    # serve dist/ on http://localhost:4173
 ```
 
 Open the page, click **Start audio** (browsers only start audio after a click), listen. The panel
-mutes layers individually, changes the step rate (which changes the walk, the drums and the tongue
-together), and switches the picture or the bloom off.
+mutes layers individually or the whole mix, pauses the audio (the picture keeps walking), changes the
+step rate (which changes the walk, the drums and the tongue together), and switches the picture, the
+bloom or hi-res rendering on and off.
+
+Drag the scene to orbit the camera around the gecko (mouse or finger), scroll or pinch to dolly,
+double-click or press **reset view** to go back. The drag offsets sit on top of the automatic orbit
+and feed the same camera the sound reads, so the pad pans and the far-camera muffling follow you.
 
 ## Layout
 
@@ -22,7 +27,8 @@ together), and switches the picture or the bloom off.
 | `src/gait.ts` | The one source of truth: vertex positions, camera, projection (a port of the shader's bake pass), the event channels (`contact`, `swing`, `tongue`, `breath`, `tail`, `camDist`, `camYaw`) and closed-form event times (`landings`, `hatTicks`, `tongueOnsets`). |
 | `src/render.ts` | Pass 1 of the shader as geometry: the projected vertices become wobbly `LineSegments` and square `Points` in a pixel-space orthographic scene, combined with max blending like the shader, plus a faint bloom. |
 | `src/audio.ts` | The audio graph, layer by layer as in `build_gecko_audio.py`, with a lookahead scheduler that books kicks, snares, hats and tongue pops on the AudioContext clock. |
-| `src/main.ts` | One clock, the UI, the frame loop. |
+| `src/orbit.ts` | Pointer-event orbit: drag = yaw / elevation offsets, wheel or pinch = zoom, written into `params`. |
+| `src/main.ts` | One clock (performance.now until audio starts or while it is paused, AudioContext time otherwise), the UI, the frame loop. |
 
 ## How the timing works
 

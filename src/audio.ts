@@ -114,6 +114,23 @@ export class GeckoAudio {
     this.master.disconnect();
   }
 
+  /** Suspend the context and stop booking events. The animation clock in main.ts carries on without us. */
+  async pause() {
+    if (this.timer !== undefined) { window.clearInterval(this.timer); this.timer = undefined; }
+    await this.ctx.suspend();
+  }
+  /** Resume at animation second `sec`: re-anchor the clock so the next landings are booked at the right time. */
+  async resume(sec: number) {
+    await this.ctx.resume();
+    this.ctxT0 = this.ctx.currentTime;
+    this.sec0 = sec;
+    this.scheduledUntil = sec;
+    if (this.timer === undefined) this.timer = window.setInterval(() => this.schedule(), TICK_MS);
+  }
+  setMasterMuted(muted: boolean) {
+    this.master.gain.setTargetAtTime(muted ? 0 : 0.8, this.ctx.currentTime, 0.02);
+  }
+
   // ------------------------------------------------------------ clocks
   toCtx(sec: number) { return this.ctxT0 + (sec - this.sec0); }
   toSec(ctxTime: number) { return this.sec0 + (ctxTime - this.ctxT0); }

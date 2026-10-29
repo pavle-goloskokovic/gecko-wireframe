@@ -20,6 +20,10 @@ export const params = {
   camShake: 1.0,       // handheld micro-shake and roll (uCamShake)
   centerX: 0.5,        // screen position of the target (uCenter)
   centerY: 0.5,
+  // user camera (orbit.ts), added on top of the automatic orbit
+  userYaw: 0,          // degrees, drag left/right
+  userElev: 0,         // degrees, drag up/down
+  zoom: 1.0,           // distance multiplier, wheel / pinch
   // look
   boxPx: 2.0,          // node box half-size in px (uBoxPx)
   wirePx: 1.0,         // wire thickness in px (uWirePx; WebGL lines are always 1 px, kept for the bloom pass)

@@ -3,33 +3,45 @@ import { GeckoRenderer } from './render';
 import { GeckoAudio, LAYERS } from './audio';
 import { params as P } from './params';
 import * as G from './gait';
+import { attachOrbit, resetView } from './orbit';
 
-const canvas = document.getElementById('view') as HTMLCanvasElement;
-const startBtn = document.getElementById('start') as HTMLButtonElement;
-const stepHzInput = document.getElementById('stepHz') as HTMLInputElement;
-const stepHzVal = document.getElementById('stepHzVal') as HTMLSpanElement;
-const renderToggle = document.getElementById('render') as HTMLInputElement;
-const bloomToggle = document.getElementById('bloom') as HTMLInputElement;
-const hiResToggle = document.getElementById('hires') as HTMLInputElement;
-const hiResLabel = document.getElementById('hiresLabel') as HTMLSpanElement;
-const layersBox = document.getElementById('layers') as HTMLDivElement;
-const stats = document.getElementById('stats') as HTMLDivElement;
+const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const canvas = $<HTMLCanvasElement>('view');
+const startBtn = $<HTMLButtonElement>('start');
+const pauseBtn = $<HTMLButtonElement>('pause');
+const muteToggle = $<HTMLInputElement>('mute');
+const stepHzInput = $<HTMLInputElement>('stepHz');
+const stepHzVal = $<HTMLSpanElement>('stepHzVal');
+const renderToggle = $<HTMLInputElement>('render');
+const bloomToggle = $<HTMLInputElement>('bloom');
+const hiResToggle = $<HTMLInputElement>('hires');
+const hiResLabel = $<HTMLSpanElement>('hiresLabel');
+const layersBox = $<HTMLDivElement>('layers');
+const stats = $<HTMLDivElement>('stats');
 
-// ---- clock: animation seconds. Before audio starts it runs on performance.now(); once the AudioContext
-// exists its currentTime takes over (same origin, so there is no jump) and stays the master clock.
-const perfT0 = performance.now();
+// ---- clock: animation seconds. While the audio runs, AudioContext.currentTime is the master clock (offset so
+// there is no jump when it takes over); before audio starts and while it is paused, performance.now() carries on
+// from the last known second, so the picture keeps walking with the sound suspended.
 let audio: GeckoAudio | null = null;
+let audioRunning = false;
+let secBase = 0;
+let perfBase = performance.now();
 function now(): number {
-  return audio ? audio.sec : (performance.now() - perfT0) / 1000;
+  return audio && audioRunning ? audio.sec : secBase + (performance.now() - perfBase) / 1000;
+}
+function holdClock() {           // freeze the free-running clock at the current second
+  secBase = now(); perfBase = performance.now();
 }
 
-// ---- renderer
+// ---- renderer + camera input
 const renderer = new GeckoRenderer(canvas);
 function resize() {
   renderer.resize(window.innerWidth, window.innerHeight);
 }
 window.addEventListener('resize', resize);
 resize();
+attachOrbit(canvas);
+$<HTMLButtonElement>('resetView').addEventListener('click', resetView);
 
 // ---- UI
 for (const layer of LAYERS) {
@@ -53,11 +65,31 @@ startBtn.addEventListener('click', async () => {
   const ctx = new AudioContext({ latencyHint: 'interactive' });
   await ctx.resume();
   audio = new GeckoAudio(ctx, now());
+  audioRunning = true;
   for (const cb of layersBox.querySelectorAll<HTMLInputElement>('input')) {
     audio.setMuted(cb.dataset.layer as typeof LAYERS[number], !cb.checked);
   }
+  audio.setMasterMuted(muteToggle.checked);
   startBtn.disabled = true;
   startBtn.textContent = 'Audio running';
+  pauseBtn.disabled = false;
+});
+muteToggle.addEventListener('change', () => audio?.setMasterMuted(muteToggle.checked));
+pauseBtn.addEventListener('click', async () => {
+  if (!audio) return;
+  if (audioRunning) {
+    holdClock();
+    audioRunning = false;
+    await audio.pause();
+    pauseBtn.textContent = 'resume audio';
+    startBtn.textContent = 'Audio paused';
+  } else {
+    const sec = now();
+    await audio.resume(sec);
+    audioRunning = true;
+    pauseBtn.textContent = 'pause audio';
+    startBtn.textContent = 'Audio running';
+  }
 });
 
 // ---- loop
@@ -66,7 +98,7 @@ function loop() {
   requestAnimationFrame(loop);
   const sec = now();
   if (renderToggle.checked) renderer.render(sec);
-  audio?.update(sec);
+  if (audioRunning) audio?.update(sec);
 
   frames++;
   const t = performance.now();
@@ -74,7 +106,12 @@ function loop() {
     fps = frames * 1000 / (t - fpsT); frames = 0; fpsT = t;
     const r = renderer.resolution;
     const feet = G.LEGS.map((l, i) => G.contact(sec, i) ? l : '--').join(' ');
-    stats.textContent = `${fps.toFixed(0)} fps  ${r.w}x${r.h}\nt ${sec.toFixed(1)} s  feet ${feet}\ntongue ${G.tongue(sec).toFixed(2)}  tail ${G.tail(sec).toFixed(2)}  cam ${G.camDist(sec).toFixed(2)}`;
+    stats.textContent = [
+      `${fps.toFixed(0)} fps  ${r.w}x${r.h}`,
+      `t ${sec.toFixed(1)} s  feet ${feet}`,
+      `tongue ${G.tongue(sec).toFixed(2)}  tail ${G.tail(sec).toFixed(2)}  cam ${G.camDist(sec).toFixed(2)}`,
+      `view yaw ${P.userYaw.toFixed(0)}  elev ${P.userElev.toFixed(0)}  zoom ${P.zoom.toFixed(2)}`,
+    ].join('\n');
   }
 }
 loop();

@@ -164,11 +164,16 @@ export function vertex(i: number, g: Gait): { p: V3; vis: number } {
 // ---------------------------------------------------------------- camera + projection
 export interface Camera { cam: V3; fwd: V3; r2: V3; u2: V3; dist: number }
 
+/** The automatic orbit plus the user's drag offset (orbit.ts). */
+function orbitYaw(tt: number): number {
+  return (P.yaw0 + P.userYaw) * Math.PI / 180 + TAU * P.orbit * tt + 0.35 * Math.sin(0.13 * tt);
+}
+
 export function cameraAt(g: Gait): Camera {
   const tt = g.tt;
-  const yaw = P.yaw0 * Math.PI / 180 + TAU * P.orbit * tt + 0.35 * Math.sin(0.13 * tt);
-  const elev = P.camElev * Math.PI / 180 + 0.28 * Math.sin(0.17 * tt + 1.0);
-  const dist = P.camDist * (1.0 + 0.12 * Math.sin(0.21 * tt + 2.0));
+  const yaw = orbitYaw(tt);
+  const elev = clamp((P.camElev + P.userElev) * Math.PI / 180 + 0.28 * Math.sin(0.17 * tt + 1.0), -80 * Math.PI / 180, 85 * Math.PI / 180);
+  const dist = P.camDist * (1.0 + 0.12 * Math.sin(0.21 * tt + 2.0)) * P.zoom;
   const target = add(v3(0.1, 0.12, 0.0), v3(0.15 * Math.sin(0.23 * tt), 0.03 * Math.sin(0.31 * tt), 0.12 * Math.cos(0.19 * tt)));
   const shake = mul(v3(Math.sin(7.1 * tt) + 0.5 * Math.sin(13.7 * tt), Math.sin(8.3 * tt + 1.0), Math.sin(6.7 * tt + 2.0)), P.camShake * 0.012);
   const cam = add(add(target, mul(v3(Math.cos(elev) * Math.cos(yaw), Math.sin(elev), Math.cos(elev) * Math.sin(yaw)), dist)), shake);
@@ -234,13 +239,14 @@ export function breath(sec: number): number { return 0.5 + 0.5 * Math.sin(2.3 * 
 export function spine(sec: number): number { return 0.5 + 0.5 * Math.sin(TAU * gaitPhase(sec)); }
 /** Tail tip left..right (centerAt(21).z normalised), one swing per gait cycle. */
 export function tail(sec: number): number { return 0.5 + 0.5 * Math.sin(TAU * (4.30 / 2.7) - TAU * gaitPhase(sec)); }
-/** Camera dolly 0 = closest .. 1 = farthest, 30 s period. */
-export function camDist(sec: number): number { return 0.5 + 0.5 * Math.sin(0.21 * sec * P.speed + 2.0); }
+/** Camera dolly 0 = closest .. 1 = farthest: the 30 s sine, shifted by the user's zoom and clamped. */
+export function camDist(sec: number): number {
+  const d = (1.0 + 0.12 * Math.sin(0.21 * sec * P.speed + 2.0)) * P.zoom;   // actual distance / camDist
+  return clamp((d - 0.88) / 0.24, 0, 1);
+}
 /** Camera side 0 = left .. 1 = right (sin of the orbit yaw, ~33 s). */
 export function camYaw(sec: number): number {
-  const t = sec * P.speed;
-  const yaw = 20.0 * Math.PI / 180 + TAU * 0.03 * t + 0.35 * Math.sin(0.13 * t);
-  return 0.5 + 0.5 * Math.sin(yaw);
+  return 0.5 + 0.5 * Math.sin(orbitYaw(sec * P.speed));
 }
 
 // ---------------------------------------------------------------- event times (closed form, for the scheduler)

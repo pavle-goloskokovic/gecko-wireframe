@@ -14,6 +14,9 @@
     #panel input[type=range] { flex: 1; }
     #start { font: inherit; font-weight: 600; padding: 6px 14px; margin: 4px 0 8px; background: #1e6; color: #000; border: 0; border-radius: 4px; cursor: pointer; }
     #start[disabled] { background: #363; color: #9b9; cursor: default; }
+    .hint { color: #888; font-size: 12px; flex: 1; }
+    button.small { font: inherit; font-size: 12px; padding: 2px 8px; background: #333; color: #ddd; border: 1px solid #555; border-radius: 4px; cursor: pointer; }
+    button.small[disabled] { color: #666; cursor: default; }
     #stats { color: #8a8; font-variant-numeric: tabular-nums; margin-top: 6px; white-space: pre; }
     .layers { columns: 2; column-gap: 10px; margin: 4px 0; }
     details summary { cursor: pointer; color: #aaa; }
@@ -24,6 +27,7 @@
   <div id="panel">
     <h1>GECKO</h1>
     <button id="start">Start audio</button>
+    <div class="row"><button id="pause" class="small" disabled>pause audio</button><label><input id="mute" type="checkbox" /> mute</label></div>
     <div class="row"><span>step Hz</span><input id="stepHz" type="range" min="0.5" max="1.6" step="0.01" value="0.85" /><span id="stepHzVal">0.85</span></div>
     <details open>
       <summary>layers</summary>
@@ -32,6 +36,7 @@
     <label><input id="render" type="checkbox" checked /> render picture</label>
     <label><input id="bloom" type="checkbox" checked /> bloom</label>
     <label><input id="hires" type="checkbox" /><span id="hiresLabel"> hi-res</span></label>
+    <div class="row"><span class="hint">drag to orbit, wheel / pinch to zoom</span><button id="resetView" class="small">reset view</button></div>
     <div id="stats"></div>
   </div>
   <script type="module" src="/src/main.ts"></script>
