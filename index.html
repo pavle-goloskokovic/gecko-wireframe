@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gecko</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; color: #ddd; font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }
+    #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    #panel { position: fixed; left: 12px; top: 12px; background: rgba(0, 0, 0, .65); border: 1px solid #333; padding: 10px 12px; border-radius: 6px; max-width: 260px; user-select: none; }
+    #panel h1 { font-size: 14px; margin: 0 0 6px; font-weight: 600; letter-spacing: .04em; }
+    #panel label { display: flex; align-items: center; gap: 6px; margin: 2px 0; cursor: pointer; }
+    #panel .row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+    #panel input[type=range] { flex: 1; }
+    #start { font: inherit; font-weight: 600; padding: 6px 14px; margin: 4px 0 8px; background: #1e6; color: #000; border: 0; border-radius: 4px; cursor: pointer; }
+    #start[disabled] { background: #363; color: #9b9; cursor: default; }
+    #stats { color: #8a8; font-variant-numeric: tabular-nums; margin-top: 6px; white-space: pre; }
+    .layers { columns: 2; column-gap: 10px; margin: 4px 0; }
+    details summary { cursor: pointer; color: #aaa; }
+  </style>
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <div id="panel">
+    <h1>GECKO</h1>
+    <button id="start">Start audio</button>
+    <div class="row"><span>step Hz</span><input id="stepHz" type="range" min="0.5" max="1.6" step="0.01" value="0.85" /><span id="stepHzVal">0.85</span></div>
+    <details open>
+      <summary>layers</summary>
+      <div class="layers" id="layers"></div>
+    </details>
+    <label><input id="render" type="checkbox" checked /> render picture</label>
+    <label><input id="bloom" type="checkbox" checked /> bloom</label>
+    <div id="stats"></div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
