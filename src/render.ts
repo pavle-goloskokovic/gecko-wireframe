@@ -129,6 +129,7 @@ export class GeckoRenderer {
   private pointGeo = new THREE.BufferGeometry();
   private width = 1;
   private height = 1;
+  private pxScale = 1;       // render px per css px: pixel-sized things (node boxes, wobble caps) scale with it
   bloom = true;
   /** Render at the device pixel ratio instead of 1 css px = 1 px (capped at 1280 wide). */
   hiRes = false;
@@ -174,10 +175,11 @@ export class GeckoRenderer {
   }
 
   /** Internal resolution: the window at 1 px per css px capped at 1280 wide (the TouchDesigner project used
-   *  640x360), or the full device pixel ratio when hiRes is on. Pixel sizes (boxes, wobble) are in render px,
-   *  so hi-res means finer wires and smaller nodes, as the shader would do at a higher uRes. */
+   *  640x360), or the full device pixel ratio when hiRes is on. Node boxes and the wobble caps are scaled by the
+   *  ratio so they keep their size on screen; only the 1 px wires get finer. */
   resize(cssW: number, cssH: number) {
     const scale = this.hiRes ? (window.devicePixelRatio || 1) : Math.min(1, 1280 / Math.max(cssW, 1));
+    this.pxScale = scale;
     this.width = Math.max(2, Math.round(cssW * scale));
     this.height = Math.max(2, Math.round(cssH * scale));
     this.renderer.setSize(this.width, this.height, false);
@@ -204,8 +206,8 @@ export class GeckoRenderer {
       const l = Math.hypot(dx, dy);
       if (ag < 0.001 || bg < 0.001 || l < 0.5) continue;
       const bright = e.w * 0.5 * (ag + bg);
-      const amp = P.wobble * Math.min(l, 120.0) * 0.08;
-      const bow = P.stretch * Math.min(l, 150.0) * 0.05;
+      const amp = P.wobble * Math.min(l, 120.0 * this.pxScale) * 0.08;
+      const bow = P.stretch * Math.min(l, 150.0 * this.pxScale) * 0.05;
       const ph = e.a * 1.713 + e.b * 0.931;
       const bowOff = bow * Math.sin(ph * 3.1);
       const nx = -dy / l, ny = dx / l;
@@ -233,7 +235,7 @@ export class GeckoRenderer {
     // nodes
     for (let i = 0; i < NV; i++) {
       this.pointPos[i * 3] = V[i * 4]; this.pointPos[i * 3 + 1] = V[i * 4 + 1]; this.pointPos[i * 3 + 2] = 0;
-      this.pointSize[i] = boxSize(i) * P.boxPx * V[i * 4 + 3];
+      this.pointSize[i] = boxSize(i) * P.boxPx * this.pxScale * V[i * 4 + 3];
       this.pointBright[i] = V[i * 4 + 2];
     }
     (this.pointGeo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
