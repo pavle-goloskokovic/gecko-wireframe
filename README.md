@@ -34,3 +34,7 @@ quarter second ahead. The full story, layer by layer, is in [docs/how-it-works.m
 
 Source layout: `src/gait.ts` (motion, camera, events), `src/render.ts` (lines, nodes, bloom),
 `src/audio.ts` (the synth graph and scheduler), `src/orbit.ts` (camera input), `src/main.ts` (clock and UI).
+
+## License
+
+MIT, see [LICENSE](LICENSE).
