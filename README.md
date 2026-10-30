@@ -14,6 +14,7 @@ No samples, no loops. three.js draws it, Web Audio plays it, one set of equation
 - **step Hz** sets the gait rate: walk, drums and tongue change together. 0.85 is half-time, 1.45 is drum & bass tempo.
 - **layers** mute kick, snare, hats, reese bass, sub, tongue, riser and pad one by one.
 - **drag** to orbit the camera, **wheel / pinch** to dolly, double-click or *reset view* to return. The sound follows the camera: the pad pans with it and the mix darkens with distance.
+- **wobble** sets how much the wires bend and shimmer (the original shader's hand-drawn look); 0 gives straight lines.
 - **hi-res** renders at the device pixel ratio; **bloom** and **render picture** can be switched off.
 
 ## Run it locally

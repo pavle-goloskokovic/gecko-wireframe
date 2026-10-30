@@ -12,6 +12,8 @@ const pauseBtn = $<HTMLButtonElement>('pause');
 const muteToggle = $<HTMLInputElement>('mute');
 const stepHzInput = $<HTMLInputElement>('stepHz');
 const stepHzVal = $<HTMLSpanElement>('stepHzVal');
+const wobbleInput = $<HTMLInputElement>('wobble');
+const wobbleVal = $<HTMLSpanElement>('wobbleVal');
 const renderToggle = $<HTMLInputElement>('render');
 const bloomToggle = $<HTMLInputElement>('bloom');
 const hiResToggle = $<HTMLInputElement>('hires');
@@ -55,6 +57,10 @@ for (const layer of LAYERS) {
 stepHzInput.addEventListener('input', () => {
   P.stepHz = parseFloat(stepHzInput.value);
   stepHzVal.textContent = P.stepHz.toFixed(2);
+});
+wobbleInput.addEventListener('input', () => {
+  P.wobble = parseFloat(wobbleInput.value);
+  wobbleVal.textContent = P.wobble.toFixed(2);
 });
 bloomToggle.addEventListener('change', () => { renderer.bloom = bloomToggle.checked; });
 hiResLabel.textContent = ` hi-res (x${(window.devicePixelRatio || 1).toFixed(2)})`;
